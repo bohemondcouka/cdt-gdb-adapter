@@ -76,6 +76,18 @@ export interface MemoryResponse extends Response {
     body: MemoryContents;
 }
 
+export interface AgentContents {
+    id: string;
+    'target-id': string;
+    name: string;
+    cores: string,
+    threads: string;
+    location_id: string;
+}
+
+export interface AgentResponse extends Response {
+    body: Array<AgentContents>;
+}
 export interface CDTDisassembleArguments extends DebugProtocol.DisassembleArguments {
     /**
      * Memory reference to the end location containing the instructions to disassemble. When this
@@ -125,6 +137,8 @@ export class GDBDebugSession extends LoggingDebugSession {
     protected customRequest(command: string, response: DebugProtocol.Response, args: any): void {
         if (command === 'cdt-gdb-adapter/Memory') {
             this.memoryRequest(response as MemoryResponse, args);
+        } else if (command === 'cdt-gdb-adapter/Agents') {
+            this.agentsRequest(response as AgentResponse, args);
         } else {
             return super.customRequest(command, response, args);
         }
@@ -833,6 +847,19 @@ export class GDBDebugSession extends LoggingDebugSession {
                 data: result.memory[0].contents,
                 address: result.memory[0].begin,
             };
+            this.sendResponse(response);
+        } catch (err) {
+            this.sendErrorResponse(response, 1, err.message);
+        }
+    }
+
+    protected async agentsRequest(response: AgentResponse, args: any) {
+        interface AgentGDBResponse {
+            agents: Array<AgentContents>;
+        }
+        try {
+            let result = await this.gdb.sendCommand(`-agent-info`);
+            response.body = (result as AgentGDBResponse).agents;
             this.sendResponse(response);
         } catch (err) {
             this.sendErrorResponse(response, 1, err.message);
