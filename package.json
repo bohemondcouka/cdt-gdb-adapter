@@ -8,6 +8,7 @@
     "install": "node install.js",
     "nativebuild": "node-gyp rebuild",
     "prepublish": "yarn build",
+    "prepare": "yarn && yarn build",
     "build": "tsc",
     "watch": "tsc -w",
     "clean": "git clean -dfx",
